@@ -1,6 +1,6 @@
 # demo_flutter_app
 
-A new Flutter project.
+Flutter App with GraphQL client
 
 ## Getting Started
 
