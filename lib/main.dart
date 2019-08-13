@@ -47,29 +47,34 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Flutter GraphlQL Client"),
+        title: Text("Flutter GraphQL Client"),
       ),
       body: Query(
         options: QueryOptions(
-            document: query, variables: <String, dynamic>{"code": "US"}),
+            document: query, variables: <String, dynamic>{"code": "EU"}),
         builder: (
             QueryResult result, {
               VoidCallback refetch,
             }) {
+          if (result.errors != null) {
+            return Text(result.errors.toString());
+          }
           if (result.loading) {
             return Center(child: CircularProgressIndicator());
           }
-          if (result.data == null) {
+          List countriesInQueryResult = result.data['continent']['countries'];
+          if (countriesInQueryResult.length == 0) {
             return Text("No Data Found !");
           }
           return ListView.builder(
+            itemCount: countriesInQueryResult.length,
             itemBuilder: (BuildContext context, int index) {
               return ListTile(
                 title:
-                Text(result.data['continent']['countries'][index]['name']),
+                Text(result.data['continent']['countries'][index]['name'], style: Theme.of(context).textTheme.headline),
+                subtitle: Text(result.data['continent']['countries'][index]['emoji']),
               );
             },
-            itemCount: result.data['continent']['countries'].length,
           );
         },
       ),
