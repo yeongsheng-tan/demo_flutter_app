@@ -58,21 +58,17 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
   );
   final globalKey = new GlobalKey<ScaffoldState>();
   final TextEditingController _controller = new TextEditingController();
-  bool _isSearching;
-  String _searchText = "";
-  List searchResult = new List();
+  String _continentCode = "";
 
   GraphQLClientResultState() {
     _controller.addListener(() {
       if (_controller.text.isEmpty) {
         setState(() {
-          _isSearching = false;
-          _searchText = "";
+          _continentCode = "";
         });
       } else {
         setState(() {
-          _isSearching = true;
-          _searchText = _controller.text;
+          _continentCode = _controller.text;
         });
       }
     });
@@ -81,13 +77,12 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
   @override
   void initState() {
     super.initState();
-    _isSearching = false;
   }
 
-  Widget _countriesInAsia() {
+  Widget _countriesInContinent() {
     return Query(
       options: QueryOptions(
-          document: query, variables: <String, dynamic>{"code": "AS"}),
+          document: query, variables: <String, dynamic>{"code": _continentCode}),
       builder: (
           QueryResult result, {
             VoidCallback refetch,
@@ -134,12 +129,11 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
                 ),
                 decoration: new InputDecoration(
                   prefixIcon: new Icon(Icons.search, color: Colors.white),
-                  hintText: "Search continents: AF, AS, EU, ...",
+                  hintText: "Search continents: AF, EU, OC ...",
                   hintStyle: new TextStyle(color: Colors.white)
                 ),
-                onChanged: searchOperation,
+                onChanged: searchCountriesInContinent,
               );
-              _handleSearchStart();
             } else {
               _handleSearchEnd();
             }
@@ -154,14 +148,8 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
     return Scaffold(
       key: globalKey,
       appBar: _buildAppBar(context),
-      body: _countriesInAsia(),
+      body: _countriesInContinent(),
     );
-  }
-
-  void _handleSearchStart() {
-    setState(() {
-      _isSearching = true;
-    });
   }
 
   void _handleSearchEnd() {
@@ -174,12 +162,12 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
         "Flutter GraphQL Client",
         style: new TextStyle(color: Colors.white),
       );
-      _isSearching = false;
       _controller.clear();
     });
   }
 
-  void searchOperation(String continentCode) {
-
+  void searchCountriesInContinent(String continentCode) {
+    _continentCode = continentCode.toUpperCase();
+    _countriesInContinent();
   }
 }
