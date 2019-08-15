@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'components/country.dart';
+import 'services/graphQLConf.dart';
+import 'services/queryDefinition.dart';
 
-void main() => runApp(MaterialApp(home: MyApp()));
+GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration();
+void main() => runApp(
+    GraphQLProvider(
+      client: graphQLConfiguration.client,
+      child: CacheProvider(child: MyApp()),
+    )
+);
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    final HttpLink httpLink = HttpLink(
-        uri: "https://countries.trevorblades.com/"
-    );
-    final ValueNotifier<GraphQLClient> client = ValueNotifier<GraphQLClient>(
-      GraphQLClient(
-        link: httpLink,
-        cache: OptimisticCache(
-          dataIdFromObject: typenameDataIdFromObject,
-        ),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
       ),
-    );
-    return GraphQLProvider(
-      child: GraphQLClientResult(),
-      client: client,
+      home: GraphQLClientResult(),
     );
   }
 }
@@ -31,24 +32,8 @@ class GraphQLClientResult extends StatefulWidget {
 }
 
 class GraphQLClientResultState extends State<GraphQLClientResult> {
-  final String query = r"""
-                    query GetContinent($code : String!){
-                      continent(code:$code){
-                        name
-                        countries{
-                          name
-                          native
-                          emoji
-                          phone
-                          languages{
-                            name
-                            native
-                          }
-                        }
-                      }
-                    }
-                  """;
-
+  List<Country> listCountry = List<Country>();
+  GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration();
   Widget appBarTitle = new Text(
     "Flutter GraphQL Client",
     style: new TextStyle(color: Colors.white),
@@ -80,35 +65,31 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
     super.initState();
   }
 
-  Widget _countriesInContinent() {
-    return Query(
-      options: QueryOptions(
-        document: query,
-        variables: <String, dynamic>{
-          "code": _continentCode
-        }
-    ),
-    builder: (
-      QueryResult result, {VoidCallback refetch, FetchMore fetchMore}) {
-          if (result.errors != null) { return Text(result.errors.toString()); }
-          if (result.loading) { return Center(child: CircularProgressIndicator()); }
-
-          List countriesInQueryResult = result.data['continent']['countries'];
-          if (countriesInQueryResult.length == 0) { return Text("No Data Found !"); }
-          return ListView.builder(
-            itemCount: countriesInQueryResult.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                  title: Text(
-                      result.data['continent']['countries'][index]['name'],
-                      style: Theme.of(context).textTheme.headline
-                  ),
-                  subtitle: Text(result.data['continent']['countries'][index]['emoji']),
-                );
-              },
-            );
-          },
+  void _countriesInContinent(String continentCode) async {
+    QueryDefinition queryDefinition = QueryDefinition();
+    GraphQLClient _client = graphQLConfiguration.clientToQuery();
+    _continentCode = (continentCode.length > 2 ? continentCode.substring(0,2).toUpperCase() : continentCode.toUpperCase());
+    QueryResult result = await _client.query(
+      QueryOptions(
+        document: queryDefinition.getCountriesInContinent(),
+        variables: <String, dynamic>{"code": _continentCode}
+      ),
     );
+    listCountry.clear();
+    if (!result.hasErrors) {
+      for (var countryIndex = 0; countryIndex < result.data['continent']['countries'].length; countryIndex++) {
+        setState(() {
+          listCountry.add(
+              Country(
+                result.data['continent']['countries'][countryIndex]['name'],
+                result.data['continent']['countries'][countryIndex]['native'],
+                result.data['continent']['countries'][countryIndex]['emoji'],
+                result.data['continent']['countries'][countryIndex]['phone'],
+              )
+          );
+        });
+      }
+    }
   }
 
   Widget _buildAppBar(BuildContext context) {
@@ -117,6 +98,7 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
         icon: searchIcon,
         onPressed: () {
           setState(() {
+            listCountry.clear();
             if (this.searchIcon.icon == Icons.search) {
               this.searchIcon = new Icon(
                 Icons.close,
@@ -130,9 +112,9 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
                 decoration: new InputDecoration(
                   prefixIcon: new Icon(Icons.search, color: Colors.white),
                   hintText: "Search continents: AF, EU, OC ...",
-                  hintStyle: new TextStyle(color: Colors.white)
+                  hintStyle: new TextStyle(color: Colors.cyanAccent)
                 ),
-                onChanged: searchCountriesInContinent,
+                onChanged: _countriesInContinent,
               );
             } else {
               _handleSearchEnd();
@@ -145,10 +127,39 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
 
   @override
   Widget build(BuildContext context) {
+    String resultHeader = "Countries of " + (_continentCode.trim().length == 0 ? "??" : _continentCode);
     return Scaffold(
       key: globalKey,
       appBar: _buildAppBar(context),
-      body: _countriesInContinent(),
+      body: Stack(
+        children: <Widget>[
+          Container(
+            width: MediaQuery.of(context).size.width,
+            child: Text(
+              resultHeader,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 24.0),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.only(top: 30.0),
+            child: ListView.builder(
+              itemCount: listCountry.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(
+                    "${listCountry[index].getName()}",
+                    style: Theme.of(context).textTheme.subhead,
+                  ),
+                  subtitle: Text(
+                    "${listCountry[index].getEmoji()} ${listCountry[index].getNative()} (${listCountry[index].getPhone()})",
+                  ),
+                );
+              },
+            )
+          )
+        ]
+      )
     );
   }
 
@@ -164,10 +175,5 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
       );
       _controller.clear();
     });
-  }
-
-  void searchCountriesInContinent(String continentCode) {
-    _continentCode = continentCode.toUpperCase();
-    _countriesInContinent();
   }
 }
