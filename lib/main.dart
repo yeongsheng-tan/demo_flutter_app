@@ -7,11 +7,12 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    final HttpLink httpLink =
-    HttpLink(uri: "https://countries.trevorblades.com/");
+    final HttpLink httpLink = HttpLink(
+        uri: "https://countries.trevorblades.com/"
+    );
     final ValueNotifier<GraphQLClient> client = ValueNotifier<GraphQLClient>(
       GraphQLClient(
-        link: httpLink as Link,
+        link: httpLink,
         cache: OptimisticCache(
           dataIdFromObject: typenameDataIdFromObject,
         ),
@@ -82,32 +83,31 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
   Widget _countriesInContinent() {
     return Query(
       options: QueryOptions(
-          document: query, variables: <String, dynamic>{"code": _continentCode}),
-      builder: (
-          QueryResult result, {
-            VoidCallback refetch,
-          }) {
-                if (result.errors != null) {
-                  return Text(result.errors.toString());
-                }
-                if (result.loading) {
-                  return Center(child: CircularProgressIndicator());
-                }
-                List countriesInQueryResult = result.data['continent']['countries'];
-                if (countriesInQueryResult.length == 0) {
-                  return Text("No Data Found !");
-                }
-                return ListView.builder(
-                  itemCount: countriesInQueryResult.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return ListTile(
-                      title:
-                      Text(result.data['continent']['countries'][index]['name'], style: Theme.of(context).textTheme.headline),
-                      subtitle: Text(result.data['continent']['countries'][index]['emoji']),
-                    );
-                  },
+        document: query,
+        variables: <String, dynamic>{
+          "code": _continentCode
+        }
+    ),
+    builder: (
+      QueryResult result, {VoidCallback refetch, FetchMore fetchMore}) {
+          if (result.errors != null) { return Text(result.errors.toString()); }
+          if (result.loading) { return Center(child: CircularProgressIndicator()); }
+
+          List countriesInQueryResult = result.data['continent']['countries'];
+          if (countriesInQueryResult.length == 0) { return Text("No Data Found !"); }
+          return ListView.builder(
+            itemCount: countriesInQueryResult.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                  title: Text(
+                      result.data['continent']['countries'][index]['name'],
+                      style: Theme.of(context).textTheme.headline
+                  ),
+                  subtitle: Text(result.data['continent']['countries'][index]['emoji']),
                 );
               },
+            );
+          },
     );
   }
 
