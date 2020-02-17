@@ -1,4 +1,4 @@
 java adopt-openjdk-8u232-b09_openj9-0.17.0
-flutter 1.12.13+hotfix.5-stable
-dart 2.7.0
-nodejs 12.14.0
+flutter 1.12.13+hotfix.8-stable
+dart 2.7.1
+nodejs 12.16.0
