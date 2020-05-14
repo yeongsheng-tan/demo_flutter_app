@@ -1,4 +1,5 @@
 java adopt-openjdk-8u252-b09.1
-flutter 1.17.0-stable
-dart 2.7.2
-nodejs 12.16.1
+flutter 1.17.1-stable
+dart 2.8.2
+nodejs 14.2.0
+dotnet-core 3.1.202
