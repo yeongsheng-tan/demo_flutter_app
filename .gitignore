@@ -9,6 +9,7 @@
 .history
 .svn/
 .tool-versions
+.flutter-plugins-dependencies
 
 # IntelliJ related
 *.iml
