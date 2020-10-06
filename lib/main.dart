@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+
 import 'components/country.dart';
 import 'services/graphQLConf.dart';
 import 'services/queryDefinition.dart';
 
 GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration();
-void main() => runApp(
-    GraphQLProvider(
+void main() => runApp(GraphQLProvider(
       client: graphQLConfiguration.client,
       child: CacheProvider(child: MyApp()),
-    )
-);
+    ));
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -68,25 +67,26 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
   void _countriesInContinent(String continentCode) async {
     QueryDefinition queryDefinition = QueryDefinition();
     GraphQLClient _client = graphQLConfiguration.clientToQuery();
-    _continentCode = (continentCode.length > 2 ? continentCode.substring(0,2).toUpperCase() : continentCode.toUpperCase());
+    _continentCode = (continentCode.length > 2
+        ? continentCode.substring(0, 2).toUpperCase()
+        : continentCode.toUpperCase());
     QueryResult result = await _client.query(
       QueryOptions(
-        document: queryDefinition.getCountriesInContinent(),
-        variables: <String, dynamic>{"code": _continentCode}
-      ),
+          document: queryDefinition.getCountriesInContinent(),
+          variables: <String, dynamic>{"code": _continentCode}),
     );
     listCountry.clear();
-    if (!result.hasErrors) {
-      for (var countryIndex = 0; countryIndex < result.data['continent']['countries'].length; countryIndex++) {
+    if (!result.hasException) {
+      for (var countryIndex = 0;
+          countryIndex < result.data['continent']['countries'].length;
+          countryIndex++) {
         setState(() {
-          listCountry.add(
-              Country(
-                result.data['continent']['countries'][countryIndex]['name'],
-                result.data['continent']['countries'][countryIndex]['native'],
-                result.data['continent']['countries'][countryIndex]['emoji'],
-                result.data['continent']['countries'][countryIndex]['phone'],
-              )
-          );
+          listCountry.add(Country(
+            result.data['continent']['countries'][countryIndex]['name'],
+            result.data['continent']['countries'][countryIndex]['native'],
+            result.data['continent']['countries'][countryIndex]['emoji'],
+            result.data['continent']['countries'][countryIndex]['phone'],
+          ));
         });
       }
     }
@@ -110,10 +110,9 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
                   color: Colors.white,
                 ),
                 decoration: new InputDecoration(
-                  prefixIcon: new Icon(Icons.search, color: Colors.white),
-                  hintText: "Search continents: AF, EU, OC ...",
-                  hintStyle: new TextStyle(color: Colors.cyanAccent)
-                ),
+                    prefixIcon: new Icon(Icons.search, color: Colors.white),
+                    hintText: "Search continents: AF, EU, OC ...",
+                    hintStyle: new TextStyle(color: Colors.cyanAccent)),
                 onChanged: _countriesInContinent,
               );
             } else {
@@ -127,12 +126,12 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
 
   @override
   Widget build(BuildContext context) {
-    String resultHeader = "Countries of " + (_continentCode.trim().length == 0 ? "??" : _continentCode);
+    String resultHeader = "Countries of " +
+        (_continentCode.trim().length == 0 ? "??" : _continentCode);
     return Scaffold(
-      key: globalKey,
-      appBar: _buildAppBar(context),
-      body: Stack(
-        children: <Widget>[
+        key: globalKey,
+        appBar: _buildAppBar(context),
+        body: Stack(children: <Widget>[
           Container(
             width: MediaQuery.of(context).size.width,
             child: Text(
@@ -142,25 +141,22 @@ class GraphQLClientResultState extends State<GraphQLClientResult> {
             ),
           ),
           Container(
-            padding: EdgeInsets.only(top: 30.0),
-            child: ListView.builder(
-              itemCount: listCountry.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(
-                    "${listCountry[index].getName()}",
-                    style: Theme.of(context).textTheme.subhead,
-                  ),
-                  subtitle: Text(
-                    "${listCountry[index].getEmoji()} ${listCountry[index].getNative()} (${listCountry[index].getPhone()})",
-                  ),
-                );
-              },
-            )
-          )
-        ]
-      )
-    );
+              padding: EdgeInsets.only(top: 30.0),
+              child: ListView.builder(
+                itemCount: listCountry.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(
+                      "${listCountry[index].getName()}",
+                      style: Theme.of(context).textTheme.subhead,
+                    ),
+                    subtitle: Text(
+                      "${listCountry[index].getEmoji()} ${listCountry[index].getNative()} (${listCountry[index].getPhone()})",
+                    ),
+                  );
+                },
+              ))
+        ]));
   }
 
   void _handleSearchEnd() {
